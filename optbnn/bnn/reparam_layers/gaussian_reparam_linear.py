@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 class GaussianLinearReparameterization(nn.Module):
     def __init__(self, n_in, n_out, W_std=None,
-                 b_std=None, scaled_variance=True):
+                 b_std=None, scaled_variance=True, prior_per='layer'):
         """Initialization.
 
         Args:
@@ -17,6 +17,9 @@ class GaussianLinearReparameterization(nn.Module):
                 the standard deviation of the weights.
             b_std: float, the initial value of
                 the standard deviation of the biases.
+            prior_per: str, indicates whether using different prior for
+                each parameter, option `parameter`, or use the share the
+                prior for all parameters in the same layer, option `layer`.
         """
         super(GaussianLinearReparameterization, self).__init__()
 
@@ -32,7 +35,12 @@ class GaussianLinearReparameterization(nn.Module):
         if b_std is None:
             b_std = 1.
 
-        W_shape, b_shape = (1), (1)
+        if prior_per == "layer":
+            W_shape, b_shape = (1), (1)
+        elif prior_per == "parameter":
+            W_shape, b_shape = (self.n_in, self.n_out), (self.n_out)
+        else:
+            raise ValueError("Accepted values: `parameter` or `layer`")
 
         self.W_mu = 0.
         self.b_mu = 0.
